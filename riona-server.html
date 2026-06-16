@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riona - سيرفر ديسكورد</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --purple-deep: #1a0a2e;
+      --purple-mid: #2d1257;
+      --purple-core: #6b21a8;
+      --purple-bright: #9333ea;
+      --purple-glow: #c084fc;
+      --purple-pale: #e9d5ff;
+      --accent: #d946ef;
+      --gold: #f0abfc;
+      --text-main: #f3e8ff;
+      --text-sub: #c4b5fd;
+      --card-bg: rgba(109, 40, 217, 0.12);
+      --card-border: rgba(192, 132, 252, 0.25);
+      --bg: #0d0418;
+      --surface: #130a24;
+    }
+    .light {
+      --bg: #f5f0ff;
+      --surface: #ede9fe;
+      --purple-deep: #f5f0ff;
+      --purple-mid: #ede9fe;
+      --text-main: #1a0a2e;
+      --text-sub: #5b21b6;
+      --card-bg: rgba(139, 92, 246, 0.08);
+      --card-border: rgba(109, 40, 217, 0.2);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    /* ── Background orbs ── */
+    .bg-orbs {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    }
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); opacity: 0.35;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .orb1 { width: 500px; height: 500px; background: #7c3aed; top: -150px; right: -100px; }
+    .orb2 { width: 400px; height: 400px; background: #d946ef; bottom: -100px; left: -100px; animation-delay: -4s; }
+    .orb3 { width: 300px; height: 300px; background: #4f46e5; top: 50%; left: 40%; animation-delay: -8s; }
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.08); }
+    }
+    .light .orb { opacity: 0.15; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 40px;
+      background: rgba(13, 4, 24, 0.7);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+      transition: background 0.4s;
+    }
+    .light nav { background: rgba(245, 240, 255, 0.8); }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .nav-logo img {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 2px solid var(--purple-bright);
+      box-shadow: 0 0 12px rgba(147,51,234,0.6);
+    }
+    .nav-logo span {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px; font-weight: 800;
+      background: linear-gradient(135deg, #c084fc, #f0abfc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+
+    .nav-controls { display: flex; align-items: center; gap: 12px; }
+
+    /* Language toggle */
+    .lang-btn {
+      display: flex; border-radius: 30px;
+      overflow: hidden; border: 1px solid var(--card-border);
+      background: var(--card-bg);
+    }
+    .lang-btn button {
+      padding: 7px 18px; border: none; cursor: pointer;
+      font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 600;
+      background: transparent; color: var(--text-sub);
+      transition: all 0.25s;
+    }
+    .lang-btn button.active {
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: #fff;
+    }
+
+    /* Theme toggle */
+    .theme-btn {
+      width: 42px; height: 42px; border-radius: 50%;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg); cursor: pointer;
+      font-size: 18px; display: flex; align-items: center; justify-content: center;
+      transition: all 0.25s; color: var(--text-main);
+    }
+    .theme-btn:hover { background: var(--purple-core); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 120px 24px 80px;
+    }
+
+    .server-avatar {
+      width: 130px; height: 130px; border-radius: 50%;
+      border: 3px solid var(--purple-bright);
+      box-shadow: 0 0 40px rgba(147,51,234,0.7), 0 0 80px rgba(147,51,234,0.3);
+      margin-bottom: 28px;
+      animation: avatar-pulse 3s ease-in-out infinite;
+    }
+    @keyframes avatar-pulse {
+      0%,100% { box-shadow: 0 0 30px rgba(147,51,234,0.6), 0 0 60px rgba(147,51,234,0.2); }
+      50%      { box-shadow: 0 0 50px rgba(147,51,234,0.9), 0 0 100px rgba(147,51,234,0.4); }
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(109,40,217,0.2); border: 1px solid var(--purple-bright);
+      border-radius: 30px; padding: 5px 14px; font-size: 13px; font-weight: 600;
+      color: var(--purple-glow); margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+    .badge::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; animation: blink 1.5s infinite; }
+    @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(44px, 8vw, 88px);
+      font-weight: 800; line-height: 1.05;
+      background: linear-gradient(135deg, #e9d5ff 0%, #c084fc 40%, #a855f7 70%, #d946ef 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+    }
+
+    .hero p {
+      font-size: clamp(15px, 2vw, 19px); max-width: 600px;
+      color: var(--text-sub); line-height: 1.8; margin-bottom: 40px;
+    }
+
+    .hero-btns { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 36px; border-radius: 14px; border: none; cursor: pointer;
+      font-family: 'Cairo', sans-serif; font-size: 16px; font-weight: 700;
+      background: linear-gradient(135deg, #7c3aed, #a855f7, #d946ef);
+      color: #fff; text-decoration: none;
+      box-shadow: 0 4px 24px rgba(139,92,246,0.5);
+      transition: all 0.3s; position: relative; overflow: hidden;
+    }
+    .btn-primary::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(139,92,246,0.7); }
+    .btn-primary:hover::after { opacity: 1; }
+    .btn-primary span { position: relative; z-index: 1; }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 36px; border-radius: 14px; cursor: pointer;
+      font-family: 'Cairo', sans-serif; font-size: 16px; font-weight: 700;
+      background: transparent; color: var(--purple-glow); text-decoration: none;
+      border: 2px solid var(--purple-bright);
+      transition: all 0.3s;
+    }
+    .btn-secondary:hover { background: rgba(109,40,217,0.2); transform: translateY(-2px); }
+
+    /* ── STATS ── */
+    .stats {
+      position: relative; z-index: 1;
+      display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;
+      padding: 0 24px 80px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px; padding: 28px 40px;
+      text-align: center; backdrop-filter: blur(10px);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(109,40,217,0.3); }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 42px; font-weight: 800;
+      background: linear-gradient(135deg, #c084fc, #f0abfc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-label { color: var(--text-sub); font-size: 14px; margin-top: 4px; font-weight: 600; }
+
+    /* ── FEATURES ── */
+    .section {
+      position: relative; z-index: 1;
+      padding: 80px 24px; max-width: 1100px; margin: 0 auto;
+    }
+    .section-title {
+      text-align: center; margin-bottom: 56px;
+    }
+    .section-title h2 {
+      font-family: 'Syne', sans-serif; font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #c084fc, #d946ef);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+    .section-title p { color: var(--text-sub); font-size: 16px; }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .feat-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 20px; padding: 32px 28px; backdrop-filter: blur(10px);
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+      position: relative; overflow: hidden;
+    }
+    .feat-card::before {
+      content: ''; position: absolute; top: 0; right: 0;
+      width: 120px; height: 120px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(147,51,234,0.15), transparent);
+      transform: translate(30px, -30px);
+    }
+    .feat-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 48px rgba(109,40,217,0.3);
+      border-color: var(--purple-bright);
+    }
+    .feat-icon {
+      font-size: 36px; margin-bottom: 16px; display: block;
+    }
+    .feat-card h3 {
+      font-size: 20px; font-weight: 700; margin-bottom: 10px; color: var(--text-main);
+    }
+    .feat-card p { color: var(--text-sub); line-height: 1.7; font-size: 14px; }
+
+    /* ── CTA ── */
+    .cta-section {
+      position: relative; z-index: 1;
+      padding: 80px 24px; text-align: center;
+    }
+    .cta-box {
+      max-width: 700px; margin: 0 auto;
+      background: linear-gradient(135deg, rgba(109,40,217,0.2), rgba(217,70,239,0.1));
+      border: 1px solid var(--card-border); border-radius: 28px;
+      padding: 60px 40px; backdrop-filter: blur(12px);
+    }
+    .cta-box h2 {
+      font-family: 'Syne', sans-serif; font-size: clamp(26px,4vw,40px); font-weight: 800;
+      background: linear-gradient(135deg, #e9d5ff, #d946ef);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+    .cta-box p { color: var(--text-sub); margin-bottom: 36px; font-size: 16px; line-height: 1.7; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 1;
+      text-align: center; padding: 32px 24px;
+      border-top: 1px solid var(--card-border);
+      color: var(--text-sub); font-size: 13px;
+    }
+    footer a { color: var(--purple-glow); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── DISCORD ICON ── */
+    .discord-ic {
+      display: inline-block; width: 22px; height: 22px; vertical-align: middle;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--purple-core); border-radius: 4px; }
+
+    @media (max-width: 600px) {
+      nav { padding: 14px 20px; }
+      .hero-btns { flex-direction: column; align-items: center; }
+      .cta-box { padding: 40px 24px; }
+    }
+
+    /* LTR override for English */
+    html[dir="ltr"] body { font-family: 'Syne', sans-serif; }
+    html[dir="ltr"] .hero p, html[dir="ltr"] .feat-card p,
+    html[dir="ltr"] .cta-box p, html[dir="ltr"] .stat-label,
+    html[dir="ltr"] footer, html[dir="ltr"] .badge {
+      font-family: 'Cairo', sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <img src="https://cdn.discordapp.com/attachments/1397203032923705356/1516119464687566960/file_0000000035c071fd853fc5e82d0c2479.png?ex=6a317bc8&is=6a302a48&hm=b06067b088e79c03758980e3f8a11c3599fc89cbff4133e6f1ebdb668e55c422&" alt="Riona" />
+    <span>Riona</span>
+  </div>
+  <div class="nav-controls">
+    <div class="lang-btn">
+      <button class="active" id="btn-ar" onclick="setLang('ar')">العربية</button>
+      <button id="btn-en" onclick="setLang('en')">English</button>
+    </div>
+    <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع">🌙</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <img class="server-avatar"
+    src="https://cdn.discordapp.com/attachments/1397203032923705356/1516119464687566960/file_0000000035c071fd853fc5e82d0c2479.png?ex=6a317bc8&is=6a302a48&hm=b06067b088e79c03758980e3f8a11c3599fc89cbff4133e6f1ebdb668e55c422&"
+    alt="Riona Server" />
+  <div class="badge" data-ar="متصل الآن" data-en="Now Online">متصل الآن</div>
+  <h1 data-ar="Riona" data-en="Riona">Riona</h1>
+  <p data-ar="مجتمعك المفضل على ديسكورد — انضم إلينا وكن جزءاً من عالم مميز يجمع الأصدقاء والمتعة والترفيه في مكان واحد."
+     data-en="Your favorite Discord community — join us and become part of a unique world that brings friends, fun, and entertainment together in one place.">
+    مجتمعك المفضل على ديسكورد — انضم إلينا وكن جزءاً من عالم مميز يجمع الأصدقاء والمتعة والترفيه في مكان واحد.
+  </p>
+  <div class="hero-btns">
+    <a class="btn-primary" href="https://discord.gg/4kjVzN8utp" target="_blank">
+      <span>
+        <svg class="discord-ic" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        <span data-ar="انضم للسيرفر" data-en="Join Server">انضم للسيرفر</span>
+      </span>
+    </a>
+    <a class="btn-secondary" href="#features">
+      <span data-ar="اكتشف المزيد ↓" data-en="Discover More ↓">اكتشف المزيد ↓</span>
+    </a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-num">∞</div>
+    <div class="stat-label" data-ar="لحظات لا تُنسى" data-en="Unforgettable Moments">لحظات لا تُنسى</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">24/7</div>
+    <div class="stat-label" data-ar="نشاط مستمر" data-en="Always Active">نشاط مستمر</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">💜</div>
+    <div class="stat-label" data-ar="مجتمع دافئ" data-en="Warm Community">مجتمع دافئ</div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-title">
+    <h2 data-ar="لماذا Riona؟" data-en="Why Riona?">لماذا Riona؟</h2>
+    <p data-ar="مزايا تجعلنا مختلفين عن غيرنا" data-en="Features that make us stand out">مزايا تجعلنا مختلفين عن غيرنا</p>
+  </div>
+  <div class="features-grid">
+    <div class="feat-card">
+      <span class="feat-icon">🎮</span>
+      <h3 data-ar="ترفيه وألعاب" data-en="Gaming & Fun">ترفيه وألعاب</h3>
+      <p data-ar="استمتع بقنوات الألعاب والترفيه المتنوعة مع مجتمعنا المميز في أجواء مرحة وودية." data-en="Enjoy diverse gaming and entertainment channels with our amazing community in a fun and friendly atmosphere.">استمتع بقنوات الألعاب والترفيه المتنوعة مع مجتمعنا المميز في أجواء مرحة وودية.</p>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🤝</span>
+      <h3 data-ar="مجتمع داعم" data-en="Supportive Community">مجتمع داعم</h3>
+      <p data-ar="نحن هنا لبعضنا البعض — مجتمع يرحب بالجميع ويدعم أعضاءه في كل خطوة." data-en="We're here for each other — a community that welcomes everyone and supports its members every step of the way.">نحن هنا لبعضنا البعض — مجتمع يرحب بالجميع ويدعم أعضاءه في كل خطوة.</p>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🎵</span>
+      <h3 data-ar="موسيقى وصوتيات" data-en="Music & Voice">موسيقى وصوتيات</h3>
+      <p data-ar="قنوات صوتية نشطة وموسيقى تجمعنا — تجربة صوتية لا مثيل لها مع أفضل المصاحبة." data-en="Active voice channels and music that bring us together — an unmatched audio experience with great company.">قنوات صوتية نشطة وموسيقى تجمعنا — تجربة صوتية لا مثيل لها مع أفضل المصاحبة.</p>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">✨</span>
+      <h3 data-ar="أحداث حصرية" data-en="Exclusive Events">أحداث حصرية</h3>
+      <p data-ar="مسابقات وجوائز وأحداث خاصة بشكل منتظم — فرصتك للفوز والمتعة دائماً موجودة." data-en="Competitions, prizes, and special events regularly — your chance to win and have fun is always there.">مسابقات وجوائز وأحداث خاصة بشكل منتظم — فرصتك للفوز والمتعة دائماً موجودة.</p>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🛡️</span>
+      <h3 data-ar="بيئة آمنة" data-en="Safe Environment">بيئة آمنة</h3>
+      <p data-ar="إدارة محترفة ومشرفون متفانون يضمنون بيئة احترافية وآمنة لجميع الأعضاء." data-en="Professional administration and dedicated moderators ensure a professional and safe environment for all members.">إدارة محترفة ومشرفون متفانون يضمنون بيئة احترافية وآمنة لجميع الأعضاء.</p>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🌐</span>
+      <h3 data-ar="متعدد اللغات" data-en="Multilingual">متعدد اللغات</h3>
+      <p data-ar="نرحب بالجميع بالعربية والإنجليزية — لأن المجتمع الحقيقي لا يعرف حدوداً." data-en="We welcome everyone in Arabic and English — because a real community knows no borders.">نرحب بالجميع بالعربية والإنجليزية — لأن المجتمع الحقيقي لا يعرف حدوداً.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-box">
+    <h2 data-ar="جاهز للانضمام؟" data-en="Ready to Join?">جاهز للانضمام؟</h2>
+    <p data-ar="سيرفر Riona ينتظرك — انقر الزر وكن جزءاً من أسرتنا اليوم. المجتمع أكبر معك." data-en="Riona server is waiting for you — click the button and become part of our family today. The community is bigger with you.">سيرفر Riona ينتظرك — انقر الزر وكن جزءاً من أسرتنا اليوم. المجتمع أكبر معك.</p>
+    <a class="btn-primary" href="https://discord.gg/4kjVzN8utp" target="_blank">
+      <span>
+        <svg class="discord-ic" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        <span data-ar="انضم الآن مجاناً" data-en="Join Now for Free">انضم الآن مجاناً</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>
+    <span data-ar="© 2025 سيرفر Riona · صنع بـ" data-en="© 2025 Riona Server · Made with">© 2025 سيرفر Riona · صنع بـ</span>
+    💜 ·
+    <a href="https://discord.gg/4kjVzN8utp" target="_blank" data-ar="انضم إلينا على ديسكورد" data-en="Join us on Discord">انضم إلينا على ديسكورد</a>
+  </p>
+</footer>
+
+<script>
+  let currentLang = 'ar';
+  let isDark = true;
+
+  function setLang(lang) {
+    currentLang = lang;
+    const html = document.documentElement;
+    if (lang === 'en') {
+      html.setAttribute('dir', 'ltr');
+      html.setAttribute('lang', 'en');
+      document.getElementById('btn-en').classList.add('active');
+      document.getElementById('btn-ar').classList.remove('active');
+    } else {
+      html.setAttribute('dir', 'rtl');
+      html.setAttribute('lang', 'ar');
+      document.getElementById('btn-ar').classList.add('active');
+      document.getElementById('btn-en').classList.remove('active');
+    }
+    // Update all translatable elements
+    document.querySelectorAll('[data-ar]').forEach(el => {
+      el.textContent = el.getAttribute('data-' + lang);
+    });
+  }
+
+  function toggleTheme() {
+    isDark = !isDark;
+    const body = document.body;
+    const btn = document.getElementById('theme-toggle');
+    if (isDark) {
+      body.classList.remove('light');
+      btn.textContent = '🌙';
+    } else {
+      body.classList.add('light');
+      btn.textContent = '☀️';
+    }
+  }
+</script>
+</body>
+</html>
